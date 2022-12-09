@@ -38,7 +38,7 @@ func scrub(rd io.Reader, wr io.Writer, si []string) error {
 	return nil
 }
 
-func fileNameScrub(fdst string, si []string) (string, error) {
+func filePathScrub(fdst string, si []string) (string, error) {
 	//load string
 	r := strings.NewReplacer(si...)
 
@@ -57,15 +57,15 @@ func scrubFile(fsrc, fdst string, si []string) error {
 	}
 	defer fr.Close()
 
-	//create folder to place file in
-	os.MkdirAll(filepath.Dir(fdst), os.ModePerm)
-	spew.Dump(filepath.Dir(fdst))
-
-	//check if the filename is in the scrubIndex.
-	fdst, err = fileNameScrub(fdst, si)
+	//check if the filename or path is in the scrubIndex.
+	fdst, err = filePathScrub(fdst, si)
 	if err != nil {
 		return fmt.Errorf("filename scrub: %w", err)
 	}
+
+	//create folder to place file in
+	os.MkdirAll(filepath.Dir(fdst), os.ModePerm)
+	spew.Dump(filepath.Dir(fdst))
 
 	//create the file to place scrubbed data in
 	fw, err := os.OpenFile(fdst, os.O_WRONLY+os.O_CREATE, os.ModePerm)
