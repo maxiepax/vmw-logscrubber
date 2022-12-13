@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -234,6 +235,11 @@ const (
 	envInsecure = "GOVMOMI_INSECURE"
 )
 
+type siRow struct {
+	Readable   string `json:r`
+	Anonymized string `string:anon`
+}
+
 var urlDescription = fmt.Sprintf("ESX or vCenter URL [%s]", envURL)
 var urlFlag = flag.String("url", getEnvString(envURL, ""), urlDescription)
 
@@ -315,6 +321,16 @@ func Run(f func(context.Context, *vim25.Client) error) {
 	}
 }
 
+func isFlagPassed(name string) bool {
+	found := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			found = true
+		}
+	})
+	return found
+}
+
 func main() {
 
 	//initiate index that will be used for scrubbing
@@ -323,10 +339,32 @@ func main() {
 	//define flags, we want a starting directory, and the directory to output to
 	inpath := flag.String("in", ".", "in")
 	outpath := flag.String("out", "scrubbed", "out")
-	//custom := flag.String("custom", "", "custom")
+	custom := flag.String("custom", "custom.json", "custom")
 
 	//parse for defined flags by user
 	flag.Parse()
+
+	//check if custom scrubIndex needs to be appended.
+	if isFlagPassed("custom") {
+		// Open our jsonfile
+		jf, err := os.Open(*custom)
+		// if we os.Open returns an error then handle it
+		if err != nil {
+			fmt.Println(err)
+		}
+		// defer the closing of our jsonfile so that we can parse it later on
+		defer jf.Close()
+
+		b, _ := ioutil.ReadAll(jf)
+
+		var c []siRow
+
+		json.Unmarshal([]byte(b), &c)
+
+		for i := 0; i < len(c); i++ {
+			scrubIndex = append(scrubIndex, c[i].Readable, c[i].Anonymized)
+		}
+	}
 
 	//connect to vCenter to obtain MoReF Objects.
 	Run(func(ctx context.Context, c *vim25.Client) error {
