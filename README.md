@@ -31,11 +31,11 @@ For the convenience of those who don't want to compile their own binary, binarie
 When you have your log bundle available, there is no need to unzip/untar any content, the tool will "dig" through a unlimited
 amount of nested tgz files to scrub the data.
 
-Flags available are:
--in "in-directory" # this is the directory of the logs you want to scrub.
--out "out-directory" # this is a directory that will be created, and where your scrubbed logs will end up.
--custom "jsonfile.json" (default custom.json) # if you want to add more key->value's to scrub other than MoREF, please see the included example json file.
--url # if you don't want to use environment variables for the information required to connect to vCenter, use url with the format https://username:password@vcenter.rainpole.io/sdk
+Flags available are: <br/>
+-in "in-directory" # this is the directory of the logs you want to scrub.<br/>
+-out "out-directory" # this is a directory that will be created, and where your scrubbed logs will end up.<br/>
+-custom "jsonfile.json" (default custom.json) # if you want to add more key->value's to scrub other than MoREF, please see the included example json file.<br/>
+-url # if you don't want to use environment variables for the information required to connect to vCenter, use url with the format https://username:password@vcenter.rainpole.io/sdk<br/>
 
 Environment variables:
 for security, if you dont want to store usernames and passwords in plain text, use the follow environment varaibles.
@@ -44,7 +44,7 @@ export GOVMOMI_URL = https://vcenter.rainpole.io
 export GOVMOMI_USERNAME = admin-username
 export GOVMOMI_PASSWORD = admin-password
 
-to excute, run: ./vmw-logscrubber -in ./logs -out ./scrubbed-logs -custom custom.json
+to excute, run: ```./vmw-logscrubber -in ./logs -out ./scrubbed-logs -custom custom.json```
 
 ## feedback
 Companies and Organisations have different requirements when it comes to scrubbing logs. I implement the things that i can think of
