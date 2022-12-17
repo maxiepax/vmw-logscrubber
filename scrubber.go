@@ -201,7 +201,7 @@ func fileType(f io.Reader) (string, []byte, error) {
 
 type siRow struct {
 	Readable   string `json:"readable"`
-	Anonymized string `json:"anon"`
+	Anonymized string `json:"anonymized"`
 }
 
 func isFlagPassed(name string) bool {
@@ -212,4 +212,39 @@ func isFlagPassed(name string) bool {
 		}
 	})
 	return found
+}
+
+func generateIndexFile(si []string) error {
+	f, err := os.OpenFile("index.html", os.O_WRONLY+os.O_CREATE, os.ModePerm)
+	if err != nil {
+		log.Fatalf("open file error: %v", err)
+
+	}
+	defer f.Close()
+
+	_, err = io.WriteString(f, "<html> <table> <tr> <th> Human Readable </th> <th> Anonymized </th> </tr> \n")
+	if err != nil {
+		return fmt.Errorf("failed to write html header: %w", err)
+	}
+
+	for k, v := range si {
+		if k%2 == 0 {
+			_, err = io.WriteString(f, "<tr><td>"+v+"</td>\n")
+			if err != nil {
+				return err
+			}
+		} else {
+			_, err = io.WriteString(f, "<td>"+v+"</td></tr>\n")
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	_, err = io.WriteString(f, "</table> </html> \n")
+	if err != nil {
+		return fmt.Errorf("failed to write html footer: %w", err)
+	}
+
+	return nil
 }

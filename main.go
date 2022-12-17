@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/types"
@@ -45,6 +46,7 @@ func main() {
 		var c []siRow
 
 		json.Unmarshal([]byte(b), &c)
+		spew.Dump(c)
 
 		for i := 0; i < len(c); i++ {
 			scrubIndex = append(scrubIndex, c[i].Readable, c[i].Anonymized)
@@ -82,8 +84,11 @@ func main() {
 		return nil
 	})
 
-	//check if custom searchIndex needs to be added
-	//TODO:
+	//generate the index.html to use as translation when talking to support
+	err := generateIndexFile(scrubIndex)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	//build a list of files that need to be scrubbed
 	list := buildFileList(*inpath)

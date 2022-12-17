@@ -1,6 +1,6 @@
 ---
 
-Disclaimer: This is not an offical VMware log scrubber! This scrubber comes with no warranty or guarantee and it's your own responsiblity to verify that all sensitive informaton has been removed before sharing the logs. 
+Disclaimer: This is not an offical VMware log scrubber! This scrubber comes with no warranty or guarantee and it's your own responsiblity to verify that all sensitive information has been removed before sharing the logs. 
 
 ---
 
@@ -53,6 +53,7 @@ that would be useful, but only you know whats important to you! If you have any 
 ## TODO:
 
 - create understanding for other filetypes then text and tgz, certain files can't be scrubbed.
-- create the translation table, will be a .html file that is not included in scrubbed data so that you can translate when support refers to a MoREF when you need to know the underlaying human readable item.
+- ~~create the translation table, will be a .html file that is not included in scrubbed data so that you can translate when support refers to a MoREF when you need to know the underlaying human readable item.~~
+- add css to index so that it's easier to read.
 - implement support for regex, although slower and tricky to get right, i understand there will be scenarios where you need to dynamically look for strings.
 - currently scrubbs most vCenter/ESXi data. Want to ensure vSAN / NSX-T information is properly scrubbed.
