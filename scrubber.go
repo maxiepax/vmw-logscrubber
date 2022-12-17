@@ -16,27 +16,6 @@ import (
 	"strings"
 )
 
-/*
-func scrub(rd io.Reader, wr io.Writer, si []string) error {
-	//load string
-	r := strings.NewReplacer(si...)
-
-	sc := bufio.NewScanner(rd)
-	for sc.Scan() {
-		row := sc.Text()
-		row = r.Replace(row)
-		_, err := io.WriteString(wr, row+"\n")
-		if err != nil {
-			return err
-		}
-	}
-	if err := sc.Err(); err != nil {
-		return err
-	}
-
-	return nil
-}
-*/
 func scrub(rd io.Reader, wr io.Writer, si []string) error {
 	//load string
 	r := strings.NewReplacer(si...)
