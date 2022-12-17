@@ -16,6 +16,7 @@ import (
 	"strings"
 )
 
+/*
 func scrub(rd io.Reader, wr io.Writer, si []string) error {
 	//load string
 	r := strings.NewReplacer(si...)
@@ -32,6 +33,29 @@ func scrub(rd io.Reader, wr io.Writer, si []string) error {
 	if err := sc.Err(); err != nil {
 		return err
 	}
+
+	return nil
+}
+*/
+func scrub(rd io.Reader, wr io.Writer, si []string) error {
+	//load string
+	r := strings.NewReplacer(si...)
+
+	sc := bufio.NewReader(rd)
+	for {
+		row, err := sc.ReadString('\n')
+		if err == io.EOF {
+			break
+		}
+		row = r.Replace(row)
+		_, err = io.WriteString(wr, row+"\n")
+		if err != nil {
+			return err
+		}
+	}
+	//if err := row.Err(); err != nil {
+	//	return err
+	//}
 
 	return nil
 }
@@ -154,6 +178,8 @@ func scrubStream(fr io.Reader, fw io.Writer, si []string) error {
 		tarWriter.Close()
 		gzw.Close()
 
+	case "application/octet-stream":
+		log.Println("cant scrub binary files")
 	}
 
 	return scrub(r, fw, si)
