@@ -40,9 +40,9 @@ Flags available are: <br/>
 Environment variables:
 for security, if you dont want to store usernames and passwords in plain text, use the follow environment varaibles.
 
-export GOVMOMI_URL = https://vcenter.rainpole.io
-export GOVMOMI_USERNAME = admin-username
-export GOVMOMI_PASSWORD = admin-password
+export GOVMOMI_URL=https://vcenter.rainpole.io
+export GOVMOMI_USERNAME=admin-username
+export GOVMOMI_PASSWORD=admin-password
 
 to excute, run: ```./vmw-logscrubber -in ./logs -out ./scrubbed-logs -custom custom.json```
 
