@@ -6,7 +6,7 @@ Disclaimer: This is not an offical VMware log scrubber! This scrubber comes with
 
 This is a logscrubber that consumes MoREF (Managed Object REFerence) data from vCenter and anonymizes logs.
 Sensitive information such as hostnames and other identifyable data will be replaced with a generic ID.
-An example would be the hostname sfo01-w01-esx01.rainpole.io, which would be replaced in a logfile with it's corresponding random MoREF 'host-19'. Or a port-group called supersecret-production-network would become 'pvportgroup-41108'.
+An example would be the hostname sfo01-w01-esx01.rainpole.io, which would be replaced in a logfile with it's corresponding random MoREF 'host-19'. Or a port-group called supersecret-production-network would become 'dvportgroup-41108'.
 
 "This is an example string sfo01-w01-esx01.rainpole.io" would become "This is an example string host-19"
 
