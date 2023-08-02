@@ -53,6 +53,16 @@ Since the logs will be stripped from sensitive data, you may need to understand 
 
 A 9.8GB log bundle takes roughly 18 minutes to scrub on a MacBook Pro 16" M1 Pro. This will improve once i implement multi-threading since it currently only uses one thread.
 
+## compiling
+
+These steps will work on a Ubuntu linux machine.
+
+- install go and git `sudo apt install -y golang-go git`
+- verify by running `go version`
+- clone git repo `git clone git@github.com:maxiepax/vmw-logscrubber.git`
+- cd vmw-logscrubber
+- go build
+
 ## feedback
 
 Companies and Organisations have different requirements when it comes to scrubbing logs. I implement the things that i can think of that would be useful, but only you know whats important to you! If you have any feedback on missing features, or improvements, please do tell!

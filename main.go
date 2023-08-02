@@ -91,6 +91,13 @@ func main() {
 		})
 	}
 
+	//if scrubIndex is empty, show help.
+	if len(scrubIndex) == 0 {
+		fmt.Println("Replacement list is empty, please either specify a custom json file, or use vSphere integration.\n")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
 	//generate the index.html to use as translation when talking to support
 	err := generateIndexFile(scrubIndex)
 	if err != nil {
