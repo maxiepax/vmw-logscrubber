@@ -6,17 +6,15 @@ Disclaimer: This is not an offical VMware log scrubber! This scrubber comes with
 
 This is a logscrubber that consumes MoREF (Managed Object REFerence) data from vCenter and anonymizes logs.
 Sensitive information such as hostnames and other identifyable data will be replaced with a generic ID.
-An example would be the hostname sfo01-w01-esx01.rainpole.io, which would be replaced in a logfile with it's corresponding MoREF 'host-19'.
+An example would be the hostname sfo01-w01-esx01.rainpole.io, which would be replaced in a logfile with it's corresponding random MoREF 'host-19'. Or a port-group called supersecret-production-network would become 'pvportgroup-41108'.
 
 "This is an example string sfo01-w01-esx01.rainpole.io" would become "This is an example string host-19"
 
 ## security
 
-This logscrubber is intended to be used by corporations or organisations that have such high security that they
-can't send unwashed loggs to support or 3rd party. Because of this i recommend that you clone, and compile your
-own binary to guarantee that the compiled binary contains only what you expect. The source code is written with
-as few external libraries as possible to make it as easy as possible to review the code to ensure that nothing
-malicious is contained in the code.
+This logscrubber is intended to be used by corporations or organisations that have such high security that they can't send unwashed loggs to support or 3rd party.
+Because of this i recommend that you clone, and compile your own binary to guarantee that the compiled binary contains only what you expect.
+The source code is written with as few external libraries as possible to make it as easy as possible to review the code to ensure that nothing malicious is contained in the code.
 
 - main.go contains just the calls to the functions that perform the connection to vCenter, and scrubbing of logs.
 - scrubber.go contains the functions that perform the actual scrubbing of files.
@@ -26,8 +24,7 @@ For the convenience of those who don't want to compile their own binary, binarie
 
 ## running
 
-When you have your log bundle available, there is no need to unzip/untar any content, the tool will "dig" through a unlimited
-amount of nested tgz files to scrub the data.
+When you have your log bundle available, there is no need to unzip/untar any content, the tool will "dig" through a unlimited amount of nested .tar/.tgz/.zip/.gzip files to scrub the data.
 
 Flags available are: <br/>
 -in "in-directory" # this is the directory of the logs you want to scrub.<br/>
@@ -46,16 +43,22 @@ export GOVMOMI_USERNAME=admin-username
 
 export GOVMOMI_PASSWORD=admin-password
 
-to excute, run: `./vmw-logscrubber -in ./logs -out ./scrubbed-logs -custom custom.json`
+to excute, run: `./vmw-logscrubber -in ./logs -out ./scrubbed-logs -custom custom.json -vsphere -url username:password@vcenter.rainpole.io`
+
+## translation table
+
+Since the logs will be stripped from sensitive data, you may need to understand what the original string was when support says "there's an issue with host-19". vmw-logscrubber will generate a file called "index.html" in the dir where you ran the command from. This file is a key-value index that shows the original string, and the replaced string.
+
+## performance
+
+A 9.8GB log bundle takes roughly 18 minutes to scrub on a MacBook Pro 16" M1 Pro. This will improve once i implement multi-threading since it currently only uses one thread.
 
 ## feedback
 
-Companies and Organisations have different requirements when it comes to scrubbing logs. I implement the things that i can think of
-that would be useful, but only you know whats important to you! If you have any feedback on missing features, or improvements, please do tell!
+Companies and Organisations have different requirements when it comes to scrubbing logs. I implement the things that i can think of that would be useful, but only you know whats important to you! If you have any feedback on missing features, or improvements, please do tell!
 
 ## TODO:
 
-- create understanding for other filetypes then text and tgz, certain files can't be scrubbed.
 - ~~create the translation table, will be a .html file that is not included in scrubbed data so that you can translate when support refers to a MoREF when you need to know the underlaying human readable item.~~
 - add css to index so that it's easier to read.
 - implement support for regex, although slower and tricky to get right, i understand there will be scenarios where you need to dynamically look for strings.
