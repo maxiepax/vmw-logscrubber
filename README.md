@@ -34,6 +34,8 @@ Flags available are: <br/>
 -out "out-directory" # this is a directory that will be created, and where your scrubbed logs will end up.<br/>
 -custom "jsonfile.json" (default custom.json) # if you want to add more key->value's to scrub other than MoREF, please see the included example json file.<br/>
 -url # if you don't want to use environment variables for the information required to connect to vCenter, use url with the format `-url username:password@vcenter.rainpole.io` <br/>
+For securitys sake, add a prepending space before the command to avoid bash saving the password to it's history.
+e.g instead of `./vmw-scrubber -vsphere -url` write ` ./vmw-scrubber -vsphere -url`
 
 Environment variables:
 for security, if you dont want to store usernames and passwords in plain text, use the follow environment varaibles.
