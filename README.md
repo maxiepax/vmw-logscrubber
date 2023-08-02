@@ -33,7 +33,7 @@ Flags available are: <br/>
 -in "in-directory" # this is the directory of the logs you want to scrub.<br/>
 -out "out-directory" # this is a directory that will be created, and where your scrubbed logs will end up.<br/>
 -custom "jsonfile.json" (default custom.json) # if you want to add more key->value's to scrub other than MoREF, please see the included example json file.<br/>
--url # if you don't want to use environment variables for the information required to connect to vCenter, use url with the format <b> -url username:password@vcenter.rainpole.io </b><br/>
+-url # if you don't want to use environment variables for the information required to connect to vCenter, use url with the format -url username:password@vcenter.rainpole.io <br/>
 
 Environment variables:
 for security, if you dont want to store usernames and passwords in plain text, use the follow environment varaibles.
