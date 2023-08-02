@@ -2,15 +2,14 @@ package main
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"bufio"
-	"bytes"
 	"compress/gzip"
 	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,15 +25,34 @@ func scrub(rd io.Reader, wr io.Writer, si []string) error {
 		if err == io.EOF {
 			break
 		}
+		if err != nil {
+			return fmt.Errorf("(scrub) error reading row: %w", err)
+		}
 		row = r.Replace(row)
 		_, err = io.WriteString(wr, row+"\n")
 		if err != nil {
-			return err
+			return fmt.Errorf("(scrub) error writing row: %w", err)
 		}
 	}
-	//if err := row.Err(); err != nil {
-	//	return err
-	//}
+
+	return nil
+}
+
+func noscrub(rd io.Reader, wr io.Writer) error {
+	sc := bufio.NewReader(rd)
+	for {
+		row, err := sc.ReadString('\n')
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("(noscrub) error reading row: %w", err)
+		}
+		_, err = io.WriteString(wr, row+"\n")
+		if err != nil {
+			return fmt.Errorf("(noscrub) error writing row: %w", err)
+		}
+	}
 
 	return nil
 }
@@ -54,14 +72,14 @@ func scrubFile(fsrc, fdst string, si []string) error {
 	//can we open the file?
 	fr, err := os.OpenFile(fsrc, os.O_RDONLY, os.ModePerm)
 	if err != nil {
-		return err
+		return fmt.Errorf("(scrubFile) error opening file: %w", err)
 	}
 	defer fr.Close()
 
 	//check if the filename or path is in the scrubIndex.
 	fdst, err = filePathScrub(fdst, si)
 	if err != nil {
-		return fmt.Errorf("filename scrub: %w", err)
+		return fmt.Errorf("(scrubFile) failed to scrub filename: %w", err)
 	}
 
 	//create folder to place file in
@@ -75,45 +93,113 @@ func scrubFile(fsrc, fdst string, si []string) error {
 	}
 	defer fw.Close()
 
-	return scrubStream(fr, fw, si)
+	return scrubStream(fr, fw, si, fsrc)
 }
 
-func scrubStream(fr io.Reader, fw io.Writer, si []string) error {
+func scrubStream(fr io.Reader, fw io.Writer, si []string, fsrc string) error {
 
-	//check the file type
-	ct, head, err := fileType(fr)
-	if err != nil {
-		return fmt.Errorf("filetype: %w", err)
-	}
+	ft := filepath.Ext(fsrc)
 
-	//since tarreader doesn't have a seek function, we need to merge the 512 byte used to detect filetype, with the file again
-	r := io.MultiReader(bytes.NewReader(head), fr)
+	switch ft {
 
-	switch ct {
-	case "application/x-gzip":
-
-		//gzip reader and writer
-		gzr, err := gzip.NewReader(r)
+	case ".zip":
+		//write tempfile to determine filesize before streaming to tar archive
+		tmp, err := ioutil.TempFile("", "vmw-scrubber-")
 		if err != nil {
-			return err
+			return fmt.Errorf("tmpfile: %w", err)
+		}
+		defer os.Remove(tmp.Name())
+
+		//copy zip file to tmp disk file
+		i, err := io.Copy(tmp, fr)
+		if err != nil {
+			return fmt.Errorf("(scrubStream-zip) error copying .zip file to a tmp file: %w", err)
+		}
+
+		//open the zip file
+		zr, err := zip.NewReader(tmp, i)
+		if err != nil {
+			return fmt.Errorf("(scrubStream-zip) error opening the tmp zile file: %w", err)
+		}
+
+		zw := zip.NewWriter(fw)
+		defer zw.Close()
+
+		for _, f := range zr.File {
+
+			//check if the file is actually a dir
+			if f.FileInfo().IsDir() {
+				log.Printf("compressed/tar dir: %s", f.Name)
+				//path := fmt.Sprintf("%s%c", f.Name, os.PathSeparator)
+
+				_, err := zw.Create(f.Name)
+				if err != nil {
+					return fmt.Errorf("(srubStream-zip) could not create folder in zip archive: %w", err)
+				}
+
+				continue
+			}
+
+			//open the compressed file or archive
+			fileInArchive, err := f.Open()
+			if err != nil {
+				return fmt.Errorf("(scrubStream-zip) error opening a file in the zip archive: %w", err)
+			}
+
+			newFileInArchive, err := zw.Create(f.Name)
+			if err != nil {
+				return fmt.Errorf("(scrubStream-zip) error creating a file in the new zip file: %w", err)
+			}
+
+			log.Printf("scrubbing zipped file: %s", f.Name)
+			err = scrubStream(fileInArchive, newFileInArchive, si, f.Name)
+			if err != nil {
+				return fmt.Errorf("scrub: %w", err)
+			}
+
+			//close files when done
+			fileInArchive.Close()
+
+		}
+
+	case ".gz", ".tgz":
+		//gzip reader and writer
+
+		gzr, err := gzip.NewReader(fr)
+		if err != nil {
+			return fmt.Errorf("couldnt create gzip reader: %w", err)
 		}
 		gzw := gzip.NewWriter(fw)
 
+		//close file when ready
+		defer gzw.Close()
+
+		//if this is a tgz, append with .tar to ensure next loop catches case .tar
+		if ft == ".tgz" {
+			return scrubStream(gzr, gzw, si, strings.TrimSuffix(fsrc, ft)+".tar")
+		}
+
+		//if this is gz, just stream the file
+		return scrubStream(gzr, gzw, si, strings.TrimSuffix(fsrc, ft))
+
+	case ".tar":
 		//tar reader and writer
-		tarReader := tar.NewReader(gzr)
-		tarWriter := tar.NewWriter(gzw)
+
+		tarReader := tar.NewReader(fr)
+		tarWriter := tar.NewWriter(fw)
 
 		for {
 			header, err := tarReader.Next()
 
+			//if its the end of the archive, break
 			if err == io.EOF {
 				break
 			}
-
 			if err != nil {
-				return err
+				return fmt.Errorf("(scrubStream-tar) error opening the next file in archive: %w", err)
 			}
 
+			//check if the file is actually a dir
 			if header.FileInfo().IsDir() {
 				log.Printf("compressed/tar dir: %s", header.Name)
 				continue
@@ -126,8 +212,11 @@ func scrubStream(fr io.Reader, fw io.Writer, si []string) error {
 			}
 			defer os.Remove(tmp.Name())
 
-			log.Printf("scrubbing compressed/tar file: %s", header.Name)
-			err = scrubStream(tarReader, tmp, si)
+			log.Printf("scrubbing compressed/tar file: %s, byte: %d", header.Name, header.FileInfo().Size())
+
+			//TODO: check if file is corrupt
+
+			err = scrubStream(tarReader, tmp, si, header.Name)
 			if err != nil {
 				return fmt.Errorf("scrub: %w", err)
 			}
@@ -135,12 +224,11 @@ func scrubStream(fr io.Reader, fw io.Writer, si []string) error {
 			//get the filesize of the new file
 			tmpinfo, err := tmp.Stat()
 			if err != nil {
-				return fmt.Errorf("stat: %w", err)
+				return fmt.Errorf("couldnt get filesize: %w", err)
 			}
 
 			//update the header with the new filesize after scrubbing
 			header.Size = tmpinfo.Size()
-
 			tarWriter.WriteHeader(header)
 
 			//since seeker is at end of the file, to copy the content we need to reset the seeker
@@ -149,20 +237,25 @@ func scrubStream(fr io.Reader, fw io.Writer, si []string) error {
 			//copy the tmp file into the tar file
 			_, err = io.Copy(tarWriter, tmp)
 			if err != nil {
-				return err
+				return fmt.Errorf("couldnt copy file into tarfile: %w", err)
 			}
 		}
 
-		//close the files
+		//close the file
 		tarWriter.Close()
-		gzw.Close()
 
-	case "application/octet-stream":
-		log.Println("cant scrub binary files")
+		return scrub(fr, fw, si)
+
+	case ".vmdk":
+		log.Println("found vmdk file, just copying")
+		return noscrub(fr, fw)
+
+	case ".nvram":
+		log.Println("found .nvram file, just copying")
+		return noscrub(fr, fw)
 	}
 
-	return scrub(r, fw, si)
-
+	return scrub(fr, fw, si)
 }
 
 func buildFileList(path string) []string {
@@ -185,19 +278,19 @@ func buildFileList(path string) []string {
 	return r
 }
 
-func fileType(f io.Reader) (string, []byte, error) {
-	buf := make([]byte, 512)
+// func fileType(f io.Reader) (string, []byte, error) {
+// 	buf := make([]byte, 512)
 
-	_, err := f.Read(buf)
+// 	_, err := f.Read(buf)
 
-	if err != nil && err != io.EOF {
-		return "", buf, err
-	}
+// 	if err != nil && err != io.EOF {
+// 		return "", buf, err
+// 	}
 
-	contentType := http.DetectContentType(buf)
+// 	contentType := http.DetectContentType(buf)
 
-	return contentType, buf, nil
-}
+// 	return contentType, buf, nil
+// }
 
 type siRow struct {
 	Readable   string `json:"readable"`
