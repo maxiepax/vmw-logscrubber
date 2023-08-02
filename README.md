@@ -1,7 +1,5 @@
 ---
-
-Disclaimer: This is not an offical VMware log scrubber! This scrubber comes with no warranty or guarantee and it's your own responsiblity to verify that all sensitive information has been removed before sharing the logs. 
-
+Disclaimer: This is not an offical VMware log scrubber! This scrubber comes with no warranty or guarantee and it's your own responsiblity to verify that all sensitive information has been removed before sharing the logs.
 ---
 
 # vmw-logscrubber
@@ -35,7 +33,7 @@ Flags available are: <br/>
 -in "in-directory" # this is the directory of the logs you want to scrub.<br/>
 -out "out-directory" # this is a directory that will be created, and where your scrubbed logs will end up.<br/>
 -custom "jsonfile.json" (default custom.json) # if you want to add more key->value's to scrub other than MoREF, please see the included example json file.<br/>
--url # if you don't want to use environment variables for the information required to connect to vCenter, use url with the format https://username:password@vcenter.rainpole.io/sdk<br/>
+-url # if you don't want to use environment variables for the information required to connect to vCenter, use url with the format <b> -url username:password@vcenter.rainpole.io </b><br/>
 
 Environment variables:
 for security, if you dont want to store usernames and passwords in plain text, use the follow environment varaibles.
@@ -46,9 +44,10 @@ export GOVMOMI_USERNAME=admin-username
 
 export GOVMOMI_PASSWORD=admin-password
 
-to excute, run: ```./vmw-logscrubber -in ./logs -out ./scrubbed-logs -custom custom.json```
+to excute, run: `./vmw-logscrubber -in ./logs -out ./scrubbed-logs -custom custom.json`
 
 ## feedback
+
 Companies and Organisations have different requirements when it comes to scrubbing logs. I implement the things that i can think of
 that would be useful, but only you know whats important to you! If you have any feedback on missing features, or improvements, please do tell!
 
